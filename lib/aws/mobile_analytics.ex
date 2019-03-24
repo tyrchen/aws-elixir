@@ -15,13 +15,13 @@ defmodule AWS.MobileAnalytics do
   def put_events(client, input, options \\ []) do
     url = "/2014-06-05/events"
     headers = []
-    if Dict.has_key?(input, "clientContext") do
+    if Map.has_key?(input, "clientContext") do
       headers = [{"x-amz-Client-Context", input["clientContext"]}|headers]
-      input = Dict.delete(input, "clientContext")
+      input = Map.delete(input, "clientContext")
     end
-    if Dict.has_key?(input, "clientContextEncoding") do
+    if Map.has_key?(input, "clientContextEncoding") do
       headers = [{"x-amz-Client-Context-Encoding", input["clientContextEncoding"]}|headers]
-      input = Dict.delete(input, "clientContextEncoding")
+      input = Map.delete(input, "clientContextEncoding")
     end
     request(client, :post, url, headers, input, options, 202)
   end
@@ -43,13 +43,13 @@ defmodule AWS.MobileAnalytics do
       {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, response}
       {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, response=%HTTPoison.Response{status_code: 202, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, response=%HTTPoison.Response{status_code: 204, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        reason = Poison.Parser.parse!(body)["message"]
+        reason = Jason.decode!(body)["message"]
         {:error, reason}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
@@ -61,9 +61,9 @@ defmodule AWS.MobileAnalytics do
       {:ok, response=%HTTPoison.Response{status_code: ^success_status_code, body: ""}} ->
         {:ok, nil, response}
       {:ok, response=%HTTPoison.Response{status_code: ^success_status_code, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        reason = Poison.Parser.parse!(body)["message"]
+        reason = Jason.decode!(body)["message"]
         {:error, reason}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
@@ -84,7 +84,7 @@ defmodule AWS.MobileAnalytics do
 
   defp encode_payload(input) do
     if input != nil do
-      Poison.Encoder.encode(input, [])
+      Jason.encode!(input)
     else
       ""
     end

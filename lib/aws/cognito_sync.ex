@@ -270,9 +270,9 @@ defmodule AWS.Cognito.Sync do
   def update_records(client, dataset_name, identity_id, identity_pool_id, input, options \\ []) do
     url = "/identitypools/#{URI.encode(identity_pool_id)}/identities/#{URI.encode(identity_id)}/datasets/#{URI.encode(dataset_name)}"
     headers = []
-    if Dict.has_key?(input, "ClientContext") do
+    if Map.has_key?(input, "ClientContext") do
       headers = [{"x-amz-Client-Context", input["ClientContext"]}|headers]
-      input = Dict.delete(input, "ClientContext")
+      input = Map.delete(input, "ClientContext")
     end
     request(client, :post, url, headers, input, options, 200)
   end
@@ -294,13 +294,13 @@ defmodule AWS.Cognito.Sync do
       {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, response}
       {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, response=%HTTPoison.Response{status_code: 202, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, response=%HTTPoison.Response{status_code: 204, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        reason = Poison.Parser.parse!(body)["message"]
+        reason = Jason.decode!(body)["message"]
         {:error, reason}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
@@ -312,9 +312,9 @@ defmodule AWS.Cognito.Sync do
       {:ok, response=%HTTPoison.Response{status_code: ^success_status_code, body: ""}} ->
         {:ok, nil, response}
       {:ok, response=%HTTPoison.Response{status_code: ^success_status_code, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        reason = Poison.Parser.parse!(body)["message"]
+        reason = Jason.decode!(body)["message"]
         {:error, reason}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
@@ -335,7 +335,7 @@ defmodule AWS.Cognito.Sync do
 
   defp encode_payload(input) do
     if input != nil do
-      Poison.Encoder.encode(input, [])
+      Jason.encode!(input)
     else
       ""
     end

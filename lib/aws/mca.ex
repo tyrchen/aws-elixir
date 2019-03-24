@@ -25,28 +25,36 @@ defmodule AWS.MCA do
   end
 
   @spec request(map(), binary(), map(), list()) ::
-    {:ok, Poison.Parser.t | nil, Poison.Response.t} |
-    {:error, Poison.Parser.t} |
-    {:error, HTTPoison.Error.t}
+          {:ok, map() | nil, map()}
+          | {:error, map()}
+          | {:error, HTTPoison.Error.t()}
   defp request(client, action, input, options) do
     client = %{client | service: "marketplacecommerceanalytics"}
     host = get_host("marketplacecommerceanalytics", client)
     url = get_url(host, client)
-    headers = [{"Host", host},
-               {"Content-Type", "application/x-amz-json-1.1"},
-               {"X-Amz-Target", "MarketplaceCommerceAnalytics20150701.#{action}"}]
-    payload = Poison.Encoder.encode(input, [])
+
+    headers = [
+      {"Host", host},
+      {"Content-Type", "application/x-amz-json-1.1"},
+      {"X-Amz-Target", "MarketplaceCommerceAnalytics20150701.#{action}"}
+    ]
+
+    payload = Jason.encode!(input)
     headers = AWS.Request.sign_v4(client, "POST", url, headers, payload)
+
     case HTTPoison.post(url, payload, headers, options) do
-      {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
+      {:ok, response = %HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, nil, response}
-      {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
-      {:ok, _response=%HTTPoison.Response{body: body}} ->
-        error = Poison.Parser.parse!(body)
+
+      {:ok, response = %HTTPoison.Response{status_code: 200, body: body}} ->
+        {:ok, Jason.decode!(body), response}
+
+      {:ok, _response = %HTTPoison.Response{body: body}} ->
+        error = Jason.decode!(body)
         exception = error["__type"]
         message = error["message"]
         {:error, {exception, message}}
+
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
     end
@@ -63,5 +71,4 @@ defmodule AWS.MCA do
   defp get_url(host, %{:proto => proto, :port => port}) do
     "#{proto}://#{host}:#{port}/"
   end
-
 end

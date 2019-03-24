@@ -4,14 +4,13 @@
 defmodule AWS.Snowball do
   @moduledoc """
   AWS Snowball is a petabyte-scale data transport solution that uses secure
-  appliances to transfer large amounts of data between your on-premises data
-  centers and Amazon Simple Storage Service (Amazon S3). The Snowball
-  commands described here provide access to the same functionality that is
-  available in the AWS Snowball Management Console, which enables you to
-  create and manage jobs for Snowball. To transfer data locally with a
-  Snowball appliance, you'll need to use the Snowball client or the Amazon S3
-  API adapter for Snowball. For more information, see the [User
-  Guide](http://docs.aws.amazon.com/AWSImportExport/latest/ug/api-reference.html).
+  devices to transfer large amounts of data between your on-premises data
+  centers and Amazon Simple Storage Service (Amazon S3). The commands
+  described here provide access to the same functionality that is available
+  in the AWS Snowball Management Console, which enables you to create and
+  manage jobs for Snowball and Snowball Edge devices. To transfer data
+  locally with a device, you'll need to use the Snowball client or the Amazon
+  S3 API adapter for Snowball.
   """
 
   @doc """
@@ -26,7 +25,7 @@ defmodule AWS.Snowball do
   @doc """
   Cancels the specified job. You can only cancel a job before its `JobState`
   value changes to `PreparingAppliance`. Requesting the `ListJobs` or
-  `DescribeJob` action will return a job's `JobState` as part of the response
+  `DescribeJob` action returns a job's `JobState` as part of the response
   element data returned.
   """
   def cancel_job(client, input, options \\ []) do
@@ -34,9 +33,8 @@ defmodule AWS.Snowball do
   end
 
   @doc """
-  Creates an address for a Snowball to be shipped to.
-
-  Addresses are validated at the time of creation. The address you provide
+  Creates an address for a Snowball to be shipped to. In most regions,
+  addresses are validated at the time of creation. The address you provide
   must be located within the serviceable area of your region. If the address
   is invalid or unsupported, then an exception is thrown.
   """
@@ -59,7 +57,6 @@ defmodule AWS.Snowball do
   policies and permissions in place to create a job for Snowball. If you're
   creating a job for a node in a cluster, you only need to provide the
   `clusterId` value; the other job attributes are inherited from the cluster.
-  .
   """
   def create_job(client, input, options \\ []) do
     request(client, "CreateJob", input, options)
@@ -92,7 +89,7 @@ defmodule AWS.Snowball do
 
   @doc """
   Returns information about a specific job including shipping information,
-  job status, and other important metadata. .
+  job status, and other important metadata.
   """
   def describe_job(client, input, options \\ []) do
     request(client, "DescribeJob", input, options)
@@ -172,6 +169,18 @@ defmodule AWS.Snowball do
   end
 
   @doc """
+  This action returns a list of the different Amazon EC2 Amazon Machine
+  Images (AMIs) that are owned by your AWS account that would be supported
+  for use on `EDGE`, `EDGE_C`, and `EDGE_CG` devices. For more information on
+  compatible AMIs, see [Using Amazon EC2 Compute
+  Instances](http://docs.aws.amazon.com/snowball/latest/developer-guide/using-ec2.html)
+  in the *AWS Snowball Developer Guide*.
+  """
+  def list_compatible_images(client, input, options \\ []) do
+    request(client, "ListCompatibleImages", input, options)
+  end
+
+  @doc """
   Returns an array of `JobListEntry` objects of the specified length. Each
   `JobListEntry` object contains a job's state, a job's ID, and a value that
   indicates whether the job is a job part, in the case of export jobs.
@@ -203,8 +212,8 @@ defmodule AWS.Snowball do
   end
 
   @spec request(map(), binary(), map(), list()) ::
-    {:ok, Poison.Parser.t | nil, Poison.Response.t} |
-    {:error, Poison.Parser.t} |
+    {:ok, map() | nil, map()} |
+    {:error, map()} |
     {:error, HTTPoison.Error.t}
   defp request(client, action, input, options) do
     client = %{client | service: "snowball"}
@@ -213,15 +222,15 @@ defmodule AWS.Snowball do
     headers = [{"Host", host},
                {"Content-Type", "application/x-amz-json-1.1"},
                {"X-Amz-Target", "AWSIESnowballJobManagementService.#{action}"}]
-    payload = Poison.Encoder.encode(input, [])
+    payload = Jason.encode!(input)
     headers = AWS.Request.sign_v4(client, "POST", url, headers, payload)
     case HTTPoison.post(url, payload, headers, options) do
       {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, nil, response}
       {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        error = Poison.Parser.parse!(body)
+        error = Jason.decode!(body)
         exception = error["__type"]
         message = error["message"]
         {:error, {exception, message}}

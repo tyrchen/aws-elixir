@@ -252,13 +252,13 @@ defmodule AWS.Transcoder do
       {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, response}
       {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, response=%HTTPoison.Response{status_code: 202, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, response=%HTTPoison.Response{status_code: 204, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        reason = Poison.Parser.parse!(body)["message"]
+        reason = Jason.decode!(body)["message"]
         {:error, reason}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
@@ -270,9 +270,9 @@ defmodule AWS.Transcoder do
       {:ok, response=%HTTPoison.Response{status_code: ^success_status_code, body: ""}} ->
         {:ok, nil, response}
       {:ok, response=%HTTPoison.Response{status_code: ^success_status_code, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        reason = Poison.Parser.parse!(body)["message"]
+        reason = Jason.decode!(body)["message"]
         {:error, reason}
       {:error, %HTTPoison.Error{reason: reason}} ->
         {:error, %HTTPoison.Error{reason: reason}}
@@ -293,7 +293,7 @@ defmodule AWS.Transcoder do
 
   defp encode_payload(input) do
     if input != nil do
-      Poison.Encoder.encode(input, [])
+      Jason.encode!(input)
     else
       ""
     end

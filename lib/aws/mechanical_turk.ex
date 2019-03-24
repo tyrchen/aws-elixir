@@ -272,7 +272,11 @@ defmodule AWS.MechanicalTurk do
   the instant the GetFileUploadURL operation is called, and is valid for 60
   seconds. You can get a temporary file upload URL any time until the HIT is
   disposed. After the HIT is disposed, any uploaded files are deleted, and
-  cannot be retrieved.
+  cannot be retrieved. Pending Deprecation on December 12, 2017. The Answer
+  Specification structure will no longer support the `FileUploadAnswer`
+  element to be used for the QuestionForm data structure. Instead, we
+  recommend that Requesters who want to create HITs asking Workers to upload
+  files to use Amazon S3.
   """
   def get_file_upload_u_r_l(client, input, options \\ []) do
     request(client, "GetFileUploadURL", input, options)
@@ -373,10 +377,8 @@ defmodule AWS.MechanicalTurk do
   end
 
   @doc """
-  The `ListQualificationRequests` operation retrieves requests for
-  Qualifications of a particular Qualification type. The owner of the
-  Qualification type calls this operation to poll for pending requests, and
-  accepts them using the AcceptQualification operation.
+  The `ListQualificationTypes` operation returns a list of Qualification
+  types, filtered by an optional search term.
   """
   def list_qualification_types(client, input, options \\ []) do
     request(client, "ListQualificationTypes", input, options)
@@ -571,29 +573,25 @@ defmodule AWS.MechanicalTurk do
   end
 
   @spec request(map(), binary(), map(), list()) ::
-    {:ok, Poison.Parser.t | nil, Poison.Response.t} |
-    {:error, Poison.Parser.t} |
+    {:ok, map() | nil, map()} |
+    {:error, map()} |
     {:error, HTTPoison.Error.t}
   defp request(client, action, input, options) do
-
-    prefix = Keyword.get(options, :endpoint_prefix, "mturk-requester")
-    options = Keyword.delete(options, :endpoint_prefix)
     client = %{client | service: "mturk-requester"}
-    host = get_host(prefix, client)
-
+    host = get_host("mturk-requester", client)
     url = get_url(host, client)
     headers = [{"Host", host},
                {"Content-Type", "application/x-amz-json-1.1"},
                {"X-Amz-Target", "MTurkRequesterServiceV20170117.#{action}"}]
-    payload = Poison.Encoder.encode(input, [])
+    payload = Jason.encode!(input)
     headers = AWS.Request.sign_v4(client, "POST", url, headers, payload)
     case HTTPoison.post(url, payload, headers, options) do
       {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, nil, response}
       {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        error = Poison.Parser.parse!(body)
+        error = Jason.decode!(body)
         exception = error["__type"]
         message = error["message"]
         {:error, {exception, message}}

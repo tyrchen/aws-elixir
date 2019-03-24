@@ -79,8 +79,8 @@ defmodule AWS.DynamoDB.Streams do
   end
 
   @spec request(map(), binary(), map(), list()) ::
-    {:ok, Poison.Parser.t | nil, Poison.Response.t} |
-    {:error, Poison.Parser.t} |
+    {:ok, map() | nil, map()} |
+    {:error, map()} |
     {:error, HTTPoison.Error.t}
   defp request(client, action, input, options) do
     client = %{client | service: "streams.dynamodb"}
@@ -89,15 +89,15 @@ defmodule AWS.DynamoDB.Streams do
     headers = [{"Host", host},
                {"Content-Type", "application/x-amz-json-1.0"},
                {"X-Amz-Target", "DynamoDBStreams_20120810.#{action}"}]
-    payload = Poison.Encoder.encode(input, [])
+    payload = Jason.encode!(input)
     headers = AWS.Request.sign_v4(client, "POST", url, headers, payload)
     case HTTPoison.post(url, payload, headers, options) do
       {:ok, response=%HTTPoison.Response{status_code: 200, body: ""}} ->
         {:ok, nil, response}
       {:ok, response=%HTTPoison.Response{status_code: 200, body: body}} ->
-        {:ok, Poison.Parser.parse!(body), response}
+        {:ok, Jason.decode!(body), response}
       {:ok, _response=%HTTPoison.Response{body: body}} ->
-        error = Poison.Parser.parse!(body)
+        error = Jason.decode!(body)
         exception = error["__type"]
         message = error["message"]
         {:error, {exception, message}}

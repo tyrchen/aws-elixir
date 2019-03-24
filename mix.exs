@@ -4,17 +4,19 @@ defmodule AWS.Mixfile do
   @version "0.5.0"
 
   def project do
-    [app: :aws,
-     description: "AWS clients for Elixir",
-     package: package(),
-     version: @version,
-     name: "aws-elixir",
-     source_url: "https://github.com/jkakar/aws-elixir",
-     homepage_url: "http://github.com/jkakar/aws-elixir",
-     elixir: "~> 1.4",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps()]
+    [
+      app: :aws,
+      description: "AWS clients for Elixir",
+      package: package(),
+      version: @version,
+      name: "aws-elixir",
+      source_url: "https://github.com/jkakar/aws-elixir",
+      homepage_url: "http://github.com/jkakar/aws-elixir",
+      elixir: "~> 1.4",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps: deps()
+    ]
   end
 
   # Configuration for the OTP application
@@ -34,19 +36,25 @@ defmodule AWS.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:dialyxir, "~> 0.5.0", only: [:dev]},
-     {:earmark, "~> 1.1", only: [:dev]},
-     {:ex_doc, "~> 0.15.0", only: [:dev]},
-     {:httpoison, "~> 0.11.1"},
-     {:poison, "~> 3.1"},
-     {:timex, "~> 3.1"}]
+    [
+      {:dialyxir, "~> 0.5.0", only: [:dev]},
+      {:earmark, "~> 1.1", only: [:dev]},
+      {:ex_doc, "~> 0.15.0", only: [:dev]},
+      {:httpoison, "> 0.0.0"},
+      {:jason, "~> 1.1"},
+      {:timex, "> 0.0.0"}
+    ]
   end
 
   defp package do
-    [maintainers: ["Jamu Kakar"],
-     licenses: ["Apache 2.0"],
-     links: %{"GitHub" => "https://github.com/jkakar/aws-elixir",
-              "Docs" => "http://hexdocs.pm/aws/#{@version}/",
-              "Changelog" => "https://github.com/jkakar/aws-elixir/blob/master/CHANGELOG.md"}]
+    [
+      maintainers: ["Jamu Kakar"],
+      licenses: ["Apache 2.0"],
+      links: %{
+        "GitHub" => "https://github.com/jkakar/aws-elixir",
+        "Docs" => "http://hexdocs.pm/aws/#{@version}/",
+        "Changelog" => "https://github.com/jkakar/aws-elixir/blob/master/CHANGELOG.md"
+      }
+    ]
   end
 end
